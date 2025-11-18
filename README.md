@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Magnix - Plataforma Deportiva
 
-## Getting Started
+Plataforma completa para gestión de torneos, reservas de espacios deportivos y comunidad deportiva.
 
-First, run the development server:
+## Configuración
 
-```bash
+### Variables de Entorno Requeridas
+
+Crea un archivo `.env.local` con las siguientes variables:
+
+#### Firebase Authentication
+\`\`\`
+NEXT_PUBLIC_FIREBASE_API_KEY=tu_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu_proyecto.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu_proyecto_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu_proyecto.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=tu_app_id
+\`\`\`
+
+#### Backend API
+\`\`\`
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+\`\`\`
+
+## Estructura del Proyecto
+
+\`\`\`
+magnix/
+├── app/                      # Next.js App Router
+│   ├── (auth)/              # Rutas de autenticación
+│   ├── dashboard/           # Panel de usuario
+│   ├── admin/               # Panel de administrador
+│   ├── tournaments/         # Módulo de torneos
+│   ├── reservations/        # Módulo de reservas
+│   └── community/           # Módulo de comunidad
+├── components/              # Componentes reutilizables
+│   ├── ui/                  # Componentes UI base
+│   ├── auth-provider.tsx    # Provider de autenticación
+│   └── ...
+├── hooks/                   # Custom hooks
+│   ├── use-auth.ts          # Hook de autenticación
+│   └── ...
+├── lib/                     # Utilidades
+│   ├── firebase.ts          # Configuración Firebase
+│   ├── api-client.ts        # Cliente API REST
+│   └── utils.ts            # Utilidades generales
+└── types/                   # Definiciones TypeScript
+    └── index.ts            # Tipos principales
+\`\`\`
+
+## Endpoints del Backend (Spring Boot)
+
+### Autenticación
+- `GET /api/users/profile` - Obtener perfil del usuario actual
+
+### Torneos
+- `GET /api/tournaments` - Listar torneos
+- `POST /api/tournaments` - Crear torneo (Admin)
+- `GET /api/tournaments/{id}` - Obtener torneo
+- `PUT /api/tournaments/{id}` - Actualizar torneo (Admin)
+- `DELETE /api/tournaments/{id}` - Eliminar torneo (Admin)
+- `POST /api/tournaments/{id}/register` - Inscribirse en torneo
+
+### Equipos
+- `GET /api/teams` - Listar equipos
+- `POST /api/teams` - Crear equipo
+- `GET /api/teams/{id}` - Obtener equipo
+- `PUT /api/teams/{id}` - Actualizar equipo
+- `POST /api/teams/{id}/members` - Agregar miembro
+
+### Reservas
+- `GET /api/reservations` - Listar reservas del usuario
+- `POST /api/reservations` - Crear reserva
+- `GET /api/reservations/{id}` - Obtener reserva
+- `PUT /api/reservations/{id}/cancel` - Cancelar reserva
+- `GET /api/spaces` - Listar espacios disponibles
+- `GET /api/spaces/{id}/availability` - Ver disponibilidad
+
+### Comunidad
+- `GET /api/posts` - Listar publicaciones (filtro por deporte)
+- `POST /api/posts` - Crear publicación
+- `GET /api/posts/{id}` - Obtener publicación
+- `DELETE /api/posts/{id}` - Eliminar publicación
+- `POST /api/posts/{id}/like` - Like a publicación
+- `GET /api/posts/{id}/comments` - Listar comentarios
+- `POST /api/posts/{id}/comments` - Crear comentario
+
+### Admin
+- `GET /api/admin/stats` - Obtener métricas
+- `GET /api/admin/users` - Listar usuarios
+- `PUT /api/admin/users/{id}` - Actualizar usuario
+- `DELETE /api/admin/posts/{id}` - Moderar publicación
+
+## Instalación
+
+\`\`\`bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+\`\`\`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Características
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+✅ Autenticación con Firebase
+✅ Integración con API REST (Spring Boot + MySQL)
+✅ Sistema de roles (Usuario/Admin)
+✅ Gestión de torneos con brackets
+✅ Sistema de reservas con calendario
+✅ Comunidad por deporte
+✅ Panel de administración completo
+✅ Diseño responsive
+✅ Tema verde, negro y blanco
