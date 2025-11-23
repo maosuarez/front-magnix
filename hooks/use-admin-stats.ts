@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { api } from '@/lib/api-client'
+import { useState, useEffect } from 'react';
+
 
 interface AdminStats {
   totalUsers: number
@@ -20,12 +20,17 @@ export function useAdminStats() {
   useEffect(() => {
     const fetchStats = async () => {
       console.log('[v0] Fetching admin statistics')
-      const response = await api.get<AdminStats>('/admin/stats')
-      
-      if (response.data) {
-        setStats(response.data)
-      } else {
-        setError(response.error || 'Error al cargar estadísticas')
+      try {
+        const res = await fetch('/admin/stats')
+        if (!res.ok) {
+          setError(`Error fetching statistics: ${res.status} ${res.statusText}`)
+          setLoading(false)
+          return
+        }
+        const data: AdminStats = await res.json()
+        setStats(data)
+      } catch (err: any) {
+        setError(err?.message || 'Error al cargar estadísticas')
       }
       
       setLoading(false)

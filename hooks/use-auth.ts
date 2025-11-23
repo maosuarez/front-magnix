@@ -1,100 +1,130 @@
-'use client'
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { post } from '@/lib/api-client';
 
-import { useEffect, useState } from 'react'
-import { 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  type User 
-} from 'firebase/auth'
-import { auth, isFirebaseConfigured } from '@/lib/firebase'
-import { api } from '@/lib/api-client'
+export interface User {
+  id: string;
+  email: string;
+  nombre: string;
+  rol: 'usuario' | 'administrador';
+  avatar?: string;
+}
 
-export interface UserProfile {
-  id: string
-  email: string
-  name: string
-  role: 'USER' | 'ADMIN'
-  photoUrl?: string
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  error: string | null;
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    token: null,
+    loading: true,
+    error: null,
+  });
 
+  const router = useRouter();
+
+  // Initialize auth state from localStorage
   useEffect(() => {
-    if (!isFirebaseConfigured() || !auth) {
-      console.log('[v0] Firebase not configured, skipping auth setup')
-      setLoading(false)
-      return
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('[v0] Auth state changed:', firebaseUser?.email)
-      setUser(firebaseUser)
-      
-      if (firebaseUser) {
-        // Fetch user profile from backend
-        const response = await api.get<UserProfile>('/users/profile')
-        if (response.data) {
-          setProfile(response.data)
-        }
-      } else {
-        setProfile(null)
+    const token = localStorage.getItem('token');
+    const userJson = localStorage.getItem('magnix_user');
+    
+    if (token && userJson) {
+      try {
+        setState({
+          user: JSON.parse(userJson),
+          token,
+          loading: false,
+          error: null,
+        });
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('magnix_user');
+        setState(prev => ({ ...prev, loading: false }));
       }
-      
-      setLoading(false)
-    })
-
-    return () => unsubscribe()
-  }, [])
-
-  const signIn = async (email: string, password: string) => {
-    if (!isFirebaseConfigured() || !auth) {
-      return { 
-        success: false, 
-        error: 'Firebase not configured. Please add environment variables.' 
-      }
+    } else {
+      setState(prev => ({ ...prev, loading: false }));
     }
+  }, []);
 
+  const login = useCallback(async (email: string, password: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      return { success: true, user: userCredential.user }
+      const response = await post('/auth/login', { email, password });
+      const { token, user } = response;
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('magnix_user', JSON.stringify(user));
+
+      setState({
+        user,
+        token,
+        loading: false,
+        error: null,
+      });
+
+      router.push('/dashboard');
     } catch (error) {
-      console.error('[v0] Sign in error:', error)
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Sign in failed' 
-      }
+      const message = error instanceof Error ? error.message : 'Error en login';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: message,
+      }));
     }
-  }
+  }, [router]);
 
-  const signOut = async () => {
-    if (!isFirebaseConfigured() || !auth) {
-      return { success: true }
-    }
-
+  const register = useCallback(async (
+    email: string,
+    password: string,
+    nombre: string
+  ) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
     try {
-      await firebaseSignOut(auth)
-      setProfile(null)
-      return { success: true }
+      const response = await post('/auth/register', { email, password, nombre });
+      const { token, user } = response;
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('magnix_user', JSON.stringify(user));
+
+      setState({
+        user,
+        token,
+        loading: false,
+        error: null,
+      });
+
+      router.push('/dashboard');
     } catch (error) {
-      console.error('[v0] Sign out error:', error)
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Sign out failed' 
-      }
+      const message = error instanceof Error ? error.message : 'Error en registro';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: message,
+      }));
     }
-  }
+  }, [router]);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('magnix_user');
+    setState({
+      user: null,
+      token: null,
+      loading: false,
+      error: null,
+    });
+    router.push('/');
+  }, [router]);
 
   return {
-    user,
-    profile,
-    loading,
-    signIn,
-    signOut,
-    isAuthenticated: !!user,
-    isAdmin: profile?.role === 'ADMIN',
-  }
+    ...state,
+    login,
+    register,
+    logout,
+    isAuthenticated: !!state.token,
+  };
 }

@@ -1,174 +1,129 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuthContext } from '@/components/auth-provider'
-import { useAdminStats } from '@/hooks/use-admin-stats'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
-import { AdminSidebar } from '@/components/admin/admin-sidebar'
-import { StatCard } from '@/components/dashboard/stat-card'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Trophy, Calendar, MessageSquare, TrendingUp, DollarSign, Loader2 } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { AdminLayout } from '@/components/admin-layout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function AdminDashboardPage() {
-  const router = useRouter()
-  const { isAuthenticated, isAdmin, loading: authLoading } = useAuthContext()
-  const { stats, loading: statsLoading } = useAdminStats()
+const chartData = [
+  { mes: 'Ene', usuarios: 120, reservas: 45, torneos: 8 },
+  { mes: 'Feb', usuarios: 180, reservas: 65, torneos: 12 },
+  { mes: 'Mar', usuarios: 220, reservas: 89, torneos: 15 },
+  { mes: 'Abr', usuarios: 290, reservas: 120, torneos: 19 },
+];
+
+export default function AdminPage() {
+  const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    if (!authLoading && (!isAuthenticated || !isAdmin)) {
-      router.push('/')
+    if (user && user.rol !== 'administrador') {
+      router.push('/dashboard');
     }
-  }, [authLoading, isAuthenticated, isAdmin, router])
-
-  if (authLoading || !isAuthenticated || !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+  }, [user, router]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
+    <AdminLayout>
+      <div className="space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold">Panel de Administración</h1>
+          <p className="text-muted-foreground mt-1">Gestión general de Magnix</p>
+        </div>
 
-      <div className="flex flex-1">
-        <AdminSidebar />
-
-        <main className="flex-1 bg-muted p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto space-y-8">
-            {/* Header */}
-            <div>
-              <h1 className="text-3xl font-bold">Panel de Administración</h1>
-              <p className="text-muted-foreground">
-                Gestiona todos los aspectos de la plataforma
-              </p>
-            </div>
-
-            {/* Statistics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <StatCard
-                title="Total Usuarios"
-                value={statsLoading ? '-' : stats?.totalUsers || 0}
-                icon={Users}
-                description="Usuarios registrados"
-              />
-              <StatCard
-                title="Usuarios Activos"
-                value={statsLoading ? '-' : stats?.activeUsers || 0}
-                icon={TrendingUp}
-                description="Últimos 30 días"
-              />
-              <StatCard
-                title="Torneos"
-                value={statsLoading ? '-' : stats?.totalTournaments || 0}
-                icon={Trophy}
-                description="Torneos totales"
-              />
-              <StatCard
-                title="Reservas"
-                value={statsLoading ? '-' : stats?.totalReservations || 0}
-                icon={Calendar}
-                description="Reservas totales"
-              />
-              <StatCard
-                title="Publicaciones"
-                value={statsLoading ? '-' : stats?.totalPosts || 0}
-                icon={MessageSquare}
-                description="Posts en comunidad"
-              />
-              <StatCard
-                title="Ingresos"
-                value={statsLoading ? '-' : `$${stats?.revenue || 0}`}
-                icon={DollarSign}
-                description="Total acumulado"
-              />
-            </div>
-
-            {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Actividad Reciente</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Users className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Nuevo usuario registrado</p>
-                        <p className="text-xs text-muted-foreground">Hace 5 minutos</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Trophy className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Nuevo torneo creado</p>
-                        <p className="text-xs text-muted-foreground">Hace 1 hora</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Calendar className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Reserva confirmada</p>
-                        <p className="text-xs text-muted-foreground">Hace 2 horas</p>
-                      </div>
-                    </div>
+        {/* Key Metrics */}
+        <div className="grid gap-4 md:grid-cols-4">
+          {[
+            { label: 'Usuarios Totales', value: '1,248', icon: '👥', trend: '+12%' },
+            { label: 'Reservas Activas', value: '342', icon: '📅', trend: '+8%' },
+            { label: 'Torneos', value: '24', icon: '🏆', trend: '+4' },
+            { label: 'Reportes Pendientes', value: '7', icon: '⚠️', trend: '-2' },
+          ].map((metric) => (
+            <Card key={metric.label}>
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{metric.label}</p>
+                    <p className="text-3xl font-bold mt-2">{metric.value}</p>
+                    <p className="text-xs text-green-600 mt-1">{metric.trend}</p>
                   </div>
-                </CardContent>
-              </Card>
+                  <span className="text-2xl">{metric.icon}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Acciones Rápidas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      onClick={() => router.push('/admin/tournaments')}
-                      className="flex flex-col items-center gap-2 p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
-                    >
-                      <Trophy className="h-8 w-8 text-primary" />
-                      <span className="text-sm font-medium">Gestionar Torneos</span>
-                    </button>
-                    <button
-                      onClick={() => router.push('/admin/users')}
-                      className="flex flex-col items-center gap-2 p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
-                    >
-                      <Users className="h-8 w-8 text-primary" />
-                      <span className="text-sm font-medium">Gestionar Usuarios</span>
-                    </button>
-                    <button
-                      onClick={() => router.push('/admin/reservations')}
-                      className="flex flex-col items-center gap-2 p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
-                    >
-                      <Calendar className="h-8 w-8 text-primary" />
-                      <span className="text-sm font-medium">Ver Reservas</span>
-                    </button>
-                    <button
-                      onClick={() => router.push('/admin/community')}
-                      className="flex flex-col items-center gap-2 p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
-                    >
-                      <MessageSquare className="h-8 w-8 text-primary" />
-                      <span className="text-sm font-medium">Moderar Comunidad</span>
-                    </button>
+        {/* Charts */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Actividad del Sistema</CardTitle>
+            <CardDescription>Crecimiento de usuarios, reservas y torneos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="usuarios" stroke="hsl(142.5, 50%, 50%)" />
+                <Line type="monotone" dataKey="reservas" stroke="hsl(0, 0%, 20%)" />
+                <Line type="monotone" dataKey="torneos" stroke="hsl(0, 0%, 80%)" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Últimos Usuarios</CardTitle>
+              <CardDescription>Usuarios registrados recientemente</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[
+                { nombre: 'Carlos Rodríguez', email: 'carlos@example.com', fecha: 'Hoy' },
+                { nombre: 'Ana Martínez', email: 'ana@example.com', fecha: 'Ayer' },
+                { nombre: 'Pedro López', email: 'pedro@example.com', fecha: 'Hace 2 días' },
+              ].map((usuario, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <div>
+                    <p className="font-medium">{usuario.nombre}</p>
+                    <p className="text-xs text-muted-foreground">{usuario.email}</p>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </main>
+                  <span className="text-xs text-muted-foreground">{usuario.fecha}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Reservas Recientes</CardTitle>
+              <CardDescription>Últimas reservas del sistema</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[
+                { espacio: 'Cancha A', usuario: 'Juan Pérez', fecha: 'Hoy 14:00' },
+                { espacio: 'Cancha B', usuario: 'María García', fecha: 'Hoy 10:00' },
+                { espacio: 'Cancha C', usuario: 'Carlos López', fecha: 'Ayer 18:00' },
+              ].map((reserva, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <div>
+                    <p className="font-medium">{reserva.espacio}</p>
+                    <p className="text-xs text-muted-foreground">{reserva.usuario}</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{reserva.fecha}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      <Footer />
-    </div>
-  )
+    </AdminLayout>
+  );
 }

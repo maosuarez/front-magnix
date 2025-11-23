@@ -1,15 +1,14 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import { AuthProvider } from '@/components/auth-provider'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Magnix - Plataforma Deportiva',
-  description: 'Tu plataforma completa para torneos, reservas y comunidad deportiva',
+  title: 'Magnix - Gestión de Torneos y Reservas',
+  description: 'Plataforma completa para gestión de torneos, reservas de espacios deportivos y comunidad',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -38,9 +37,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`font-sans antialiased`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        {children}
         <Analytics />
       </body>
     </html>

@@ -1,8 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { api } from '@/lib/api-client'
-import type { UserProfile } from '@/hooks/use-auth'
+
+// Define UserProfile locally because '@/hooks/use-auth' does not export it.
+// Adjust fields as needed to match your application's user shape.
+type UserProfile = {
+  id: string
+  name?: string
+  email?: string
+  role?: string
+}
 
 export function useAdminUsers() {
   const [users, setUsers] = useState<UserProfile[]>([])
@@ -11,15 +18,32 @@ export function useAdminUsers() {
 
   const fetchUsers = async () => {
     console.log('[v0] Fetching users')
-    const response = await api.get<UserProfile[]>('/admin/users')
-    
-    if (response.data) {
-      setUsers(response.data)
-    } else {
-      setError(response.error || 'Error al cargar usuarios')
+    setLoading(true)
+    setError(null)
+
+    try {
+      const res = await fetch('/admin/users', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      })
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => null)
+        setError(text || `Error fetching users: ${res.status}`)
+        setUsers([])
+        return
+      }
+
+      const data = (await res.json()) as UserProfile[]
+      setUsers(Array.isArray(data) ? data : [])
+    } catch (err: any) {
+      setError(err?.message || 'Error al cargar usuarios')
+      setUsers([])
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -27,14 +51,26 @@ export function useAdminUsers() {
   }, [])
 
   const updateUser = async (userId: string, data: Partial<UserProfile>) => {
-    const response = await api.put(`/admin/users/${userId}`, data)
-    
-    if (response.data) {
+    try {
+      const res = await fetch(`/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => null)
+        return { success: false, error: text || `Request failed: ${res.status}` }
+      }
+
       await fetchUsers()
       return { success: true }
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Network error' }
     }
-    
-    return { success: false, error: response.error }
   }
 
   return { users, loading, error, updateUser, refetch: fetchUsers }
